@@ -93,10 +93,9 @@ Default output format [None]:
 Download and install Terraform:
 
 ```bash
-wget https://releases.hashicorp.com/terraform/0.13.4/terraform_0.13.4_linux_amd64.zip
-unzip terraform_0.13.4_linux_amd64.zip
-sudo mv terraform /usr/local/bin/
-export PATH=$PATH:/usr/local/bin/terraform
+sudo yum install -y yum-utils
+sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
+sudo yum -y install terraform
 ```
 
 Verify that you can run Terraform:
@@ -104,12 +103,6 @@ Verify that you can run Terraform:
 ```bash
 terraform version
 ```
-
-<!---
-This is no longer required as we get creds from the IAM role
-
-- Set up a profile using your credentials as described in the [AWS CLI Configuration and credential file settings](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html).
--->
 
 #### Install Apache Maven
 

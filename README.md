@@ -373,3 +373,12 @@ terraform destroy
 When prompted enter `yes` to allow the stack termination to proceed.
 
 Once complete, note that you will have to manually empty and delete the S3 bucket used by the pipeline.
+
+## Delete the Amazon ECR
+
+```bash
+aws ecr delete-repository \
+       --repository-name $REPOSITORY_NAME \
+	   --region $AWS_REGION \
+      --force
+```

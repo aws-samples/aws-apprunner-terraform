@@ -20,13 +20,9 @@ resource "aws_apprunner_service" "service" {
           "spring.datasource.url" : "jdbc:mysql://${aws_db_instance.db.address}/${var.db_name}"
         }
       }
-      # image_identifier      = "082037726969.dkr.ecr.us-east-1.amazonaws.com/petclinic:latest"
       image_identifier      = "${data.aws_ecr_repository.image_repo.repository_url}:latest"
       image_repository_type = "ECR"
     }
-    # tags = {
-    #   Name = "apprunner-petclinic-service"
-    # }
   }
   depends_on = [aws_iam_role.apprunner-service-role, aws_db_instance.db]
 }

@@ -246,7 +246,24 @@ Once the build is complete, you can explore your environment using the AWS conso
 
 Note that your pipeline starts in a failed state. That is because there is no code to build in the CodeCommit repo! In the next step you will push the petclinic app into the repo to trigger the pipeline.
 
+### Explore the App Runner service
 
+```typescript
+ image_repository {
+      image_configuration {
+        port = var.container_port
+        runtime_environment_variables = {
+          "spring.datasource.username" : "${var.db_user}",
+          "spring.datasource.password" : "${data.aws_ssm_parameter.dbpassword.value}",
+          "spring.datasource.initialization-mode" : var.db_initialize_mode,
+          "spring.profiles.active" : var.db_profile,
+          "spring.datasource.url" : "jdbc:mysql://${aws_db_instance.db.address}/${var.db_name}"
+        }
+      }
+      image_identifier      = "${data.aws_ecr_repository.image_repo.repository_url}:latest"
+      image_repository_type = "ECR"
+    }
+```
 ## Deploy petclinic application using the pipeline
 
 You will now use git to push the petclinic application through the pipeline.

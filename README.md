@@ -128,6 +128,7 @@ export PATH=${M2_HOME}/bin:${PATH}
 Verify the Apache Maven installation:
 
 ```bash
+source ~/.bashrc
 mvn --version
 ```
 #### Clone workshop repository

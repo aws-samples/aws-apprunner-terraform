@@ -21,7 +21,7 @@ resource "aws_iam_role" "codebuild_role" {
   ]
 }
 EOF
-  path               = "/"
+  path = "/"
 }
 
 resource "aws_iam_policy" "codebuild_policy" {

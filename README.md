@@ -329,7 +329,7 @@ From the output of the Terraform build, note the Terraform output `apprunner_ser
 ```bash
 cd aws-apprunner-terraform/terraform
 export tf_apprunner_service_url=$(terraform output apprunner_service_url)
-echo $tf_alb_address
+echo $tf_apprunner_service_url
 ```
 
 Use this in your browser to access the application.

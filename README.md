@@ -171,7 +171,7 @@ Run the following inside the Cloud9 terminal:
 ```bash
 docker run -it --rm -p 8080:80  --name petclinic petclinic
 ```
-![Architecture](images/docker-local-run.png)
+![ApplicationLocal](images/docker-local-run.png)
 
 This will run the application using container port of 80 and will expose the application to host port of 8080. Click Preview from the top menu and then click “Preview Running Application.” It will open a browser displaying the Spring Petclinic application.
 
@@ -334,7 +334,7 @@ echo $tf_apprunner_service_url
 
 Use this in your browser to access the application.
 
-
+![Petclinic](images/petclinic.png)
 ## Push a change through the pipeline and re-test
 
 The pipeline can now be used to deploy any changes to the application.

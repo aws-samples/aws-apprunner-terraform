@@ -151,7 +151,7 @@ git clone https://github.com/ibuchh/aws-apprunner-terraform.git
 ## Package the application using Apache Maven
 
 ```bash
-cd petclinic
+cd aws-apprunner-terraform/petclinic
 mvn package -Dmaven.test.skip=true
 ```
 The first time you execute this (or any other) command, Maven will need to download the plugins and related dependencies it needs to fulfill the command. From a clean installation of Maven, this can take some time (note: in the output above, it took almost five minutes). If you execute the command again, Maven will now have what it needs, so it won’t need to download anything new and will be able to execute the command quicker.
@@ -212,7 +212,7 @@ aws ssm put-parameter --name /database/password  --value mysqlpassword --type Se
 ### Edit terraform variables
 
 ```bash
-cd terraform
+cd aws-apprunner-terraform/terraform
 ```
 
 Edit `terraform.tfvars`, leave the `aws_profile` as `"default"`, and set `aws_region` to the correct value for your environment.
@@ -258,7 +258,7 @@ You will now use git to push the petclinic application through the pipeline.
 Start by switching to the `petclinic` directory:
 
 ```bash
-cd ../petclinic
+cd aws-apprunner-terraform/petclinic
 ```
 
 Set up your git username and email address:
@@ -290,14 +290,14 @@ git config --global credential.UseHttpPath true
 From the output of the Terraform build, note the Terraform output `source_repo_clone_url_http`.
 
 ```bash
-cd ../terraform
+cd aws-apprunner-terraform/terraform
 export tf_source_repo_clone_url_http=$(terraform output source_repo_clone_url_http)
 ```
 
 Set this up as a remote for your git repo as follows:
 
 ```bash
-cd ../petclinic
+cd aws-apprunner-terraform/petclinic
 git remote add origin $tf_source_repo_clone_url_http
 git remote -v
 ```
@@ -327,7 +327,7 @@ You can monitor the pipeline in the [AWS CodePipeline console](https://console.a
 From the output of the Terraform build, note the Terraform output `apprunner_service_url`.
 
 ```bash
-cd ../terraform
+cd aws-apprunner-terraform/terraform
 export tf_apprunner_service_url=$(terraform output apprunner_service_url)
 echo $tf_alb_address
 ```
@@ -342,7 +342,7 @@ The pipeline can now be used to deploy any changes to the application.
 You can try this out by changing the welcome message as follows:
 
 ```
-cd ../petclinic
+cd aws-apprunner-terraform/petclinic
 vi src/main/resources/messages/messages.properties
 ```
 Change the value for the welcome string, for example, to "Hello".
@@ -367,7 +367,7 @@ As before, you can use the console to observe the progression of the change thro
 Make sure that you remember to tear down the stack when finshed to avoid unnecessary charges. You can free up resources as follows:
 
 ```
-cd ../terraform
+cd aws-apprunner-terraform/terraform
 terraform destroy
 ```
 

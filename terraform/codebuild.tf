@@ -77,6 +77,11 @@ resource "aws_iam_role_policy_attachment" "codebuild-attach" {
 
 # Codebuild project
 
+resource "aws_s3_bucket" "cache" {
+  bucket = var.codebuild_cache_bucket_name # workaround from https://github.com/hashicorp/terraform-provider-aws/issues/10195
+  acl    = "private"
+}
+
 resource "aws_codebuild_project" "codebuild" {
   depends_on = [
     aws_codecommit_repository.source_repo,
@@ -86,6 +91,10 @@ resource "aws_codebuild_project" "codebuild" {
   service_role = aws_iam_role.codebuild_role.arn
   artifacts {
     type = "CODEPIPELINE"
+  }
+  cache {
+    type     = "S3"
+    location = var.codebuild_cache_bucket_name
   }
   environment {
     compute_type                = "BUILD_GENERAL1_MEDIUM"
@@ -137,8 +146,11 @@ phases:
       - docker push $REPOSITORY_URI:latest
       - docker push $REPOSITORY_URI:$IMAGE_TAG
       - printf '[{"name":"%s","imageUri":"%s"}]' $CONTAINER_NAME $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+cache:
+  paths:
+    - '/root/.m2/**/*'
 artifacts:
     files: imagedefinitions.json
 BUILDSPEC
   }
-}        
+}

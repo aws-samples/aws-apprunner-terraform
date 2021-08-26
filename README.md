@@ -145,7 +145,7 @@ cd aws-ecs-cicd-terraform-master
 Clone the source code repository:
 
 ```bash
-git clone https://github.com/ibuchh/aws-apprunner-terraform.git
+git clone https://github.com/aws-samples/aws-apprunner-terraform.git
 ```
 
 ## Package the application using Apache Maven
@@ -215,7 +215,7 @@ aws ssm put-parameter --name /database/password  --value mysqlpassword --type Se
 cd aws-apprunner-terraform/terraform
 ```
 
-Edit `terraform.tfvars`, leave the `aws_profile` as `"default"`, and set `aws_region` to the correct value for your environment.
+Edit `terraform.tfvars`, leave the `aws_profile` as `"default"`, and ensure `aws_region` matches your environment, and update `codebuild_cache_bucket_name` to replace the placeholder `YYYYMMDD` with today's date, and the identifier `identifier` with something unique to you to create globally unique S3 bucket name.
 
 ### Build
 

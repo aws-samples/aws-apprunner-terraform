@@ -29,11 +29,6 @@ variable "aws_ecr" {
   description = "AWS ECR "
 }
 
-# variable "container_image" {
-#  description = "Docker image to run in the ECS cluster"
-#  default     = "ibuchh/spring-petclinic-h2"
-# }
-
 variable "family" {
   description = "Family of the Task Definition"
   default     = "petclinic"
@@ -73,10 +68,6 @@ variable "db_user" {
   description = "RDS DB username"
   default     = "root"
 }
-
-# variable "db_password" {
-#   description = "RDS DB password"
-# }
 
 variable "db_profile" {
   description = "RDS Profile"

@@ -112,3 +112,7 @@ variable "apprunner-service-role" {
   description = "This role gives App Runner permission to access ECR"
   default     = "petclinic"
 }
+
+variable "codebuild_cache_bucket_name" {
+  description = "Bucketname to use for storing codebuild cache artifacts"
+}

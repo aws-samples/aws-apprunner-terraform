@@ -52,11 +52,11 @@ By default, Cloud9 manages temporary IAM credentials for you.  Unfortunately the
 1. Enter **workshop-admin** for the Name, and click **Create role**.
 ![createrole](images/createrole.png)
 1. Follow [this deep link to find your Cloud9 EC2 instance](https://console.aws.amazon.com/ec2/v2/home?#Instances:tag:Name=aws-cloud9-;sort=desc:launchTime)
-1. Select the instance, then choose **Actions / Instance Settings / Modify IAM Role**. Note: If you cannot find this menu option, then look under **Actions / Security / Modify IAM Role** instead.
+1. Select the instance, then choose **Actions / Security / Modify IAM Role**. Note: If you cannot find this menu option, then look under **Actions / Instance Settings / Modify IAM Role** instead.
 ![c9instancerole](images/c9instancerole.png)
-1. Choose **workshop-admin** from the **IAM Role** drop down, and select **Apply**
+1. Choose **workshop-admin** from the **IAM Role** drop down, and select **Save**
 ![c9attachrole](images/c9attachrole.png)
-1. Return to your workspace and click the gear icon (in top right corner), or click to open a new tab and choose "Open Preferences"
+1. Return to your Cloud9 workspace and click the gear icon (in top right corner), or click to open a new tab and choose "Open Preferences"
 1. Select **AWS SETTINGS**
 1. Turn off **AWS managed temporary credentials**
 1. Close the Preferences tab
@@ -145,13 +145,14 @@ cd aws-ecs-cicd-terraform-master
 Clone the source code repository:
 
 ```bash
-git clone https://github.com/ibuchh/aws-apprunner-terraform.git
+cd ~/environment
+git clone https://github.com/aws-samples/aws-apprunner-terraform.git
 ```
 
 ## Package the application using Apache Maven
 
 ```bash
-cd aws-apprunner-terraform/petclinic
+cd ~/environment/aws-apprunner-terraform/petclinic
 mvn package -Dmaven.test.skip=true
 ```
 The first time you execute this (or any other) command, Maven will need to download the plugins and related dependencies it needs to fulfill the command. From a clean installation of Maven, this can take some time (note: in the output above, it took almost five minutes). If you execute the command again, Maven will now have what it needs, so it won’t need to download anything new and will be able to execute the command quicker.
@@ -212,10 +213,10 @@ aws ssm put-parameter --name /database/password  --value mysqlpassword --type Se
 ### Edit terraform variables
 
 ```bash
-cd aws-apprunner-terraform/terraform
+cd ~/environment/aws-apprunner-terraform/terraform
 ```
 
-Edit `terraform.tfvars`, leave the `aws_profile` as `"default"`, and set `aws_region` to the correct value for your environment.
+Edit `terraform.tfvars`, leave the `aws_profile` as `"default"`, and ensure `aws_region` matches your environment, and update `codebuild_cache_bucket_name` to replace the placeholder `yyyymmdd` with today's date, and the identifier `identifier` with something unique to you to create globally unique S3 bucket name. S3 bucket names can include numbers, lowercase letters and hyphens.
 
 ### Build
 
@@ -275,7 +276,7 @@ You will now use git to push the petclinic application through the pipeline.
 Start by switching to the `petclinic` directory:
 
 ```bash
-cd aws-apprunner-terraform/petclinic
+cd ~/environment/aws-apprunner-terraform/petclinic
 ```
 
 Set up your git username and email address:
@@ -307,14 +308,14 @@ git config --global credential.UseHttpPath true
 From the output of the Terraform build, note the Terraform output `source_repo_clone_url_http`.
 
 ```bash
-cd aws-apprunner-terraform/terraform
-export tf_source_repo_clone_url_http=$(terraform output source_repo_clone_url_http)
+cd ~/environment/aws-apprunner-terraform/terraform
+export tf_source_repo_clone_url_http=$(terraform output --raw source_repo_clone_url_http)
 ```
 
 Set this up as a remote for your git repo as follows:
 
 ```bash
-cd aws-apprunner-terraform/petclinic
+cd ~/environment/aws-apprunner-terraform/petclinic
 git remote add origin $tf_source_repo_clone_url_http
 git remote -v
 ```
@@ -344,7 +345,7 @@ You can monitor the pipeline in the [AWS CodePipeline console](https://console.a
 From the output of the Terraform build, note the Terraform output `apprunner_service_url`.
 
 ```bash
-cd aws-apprunner-terraform/terraform
+cd ~/environment/aws-apprunner-terraform/terraform
 export tf_apprunner_service_url=$(terraform output apprunner_service_url)
 echo $tf_apprunner_service_url
 ```
@@ -359,7 +360,7 @@ The pipeline can now be used to deploy any changes to the application.
 You can try this out by changing the welcome message as follows:
 
 ```
-cd aws-apprunner-terraform/petclinic
+cd ~/environment/aws-apprunner-terraform/petclinic
 vi src/main/resources/messages/messages.properties
 ```
 Change the value for the welcome string, for example, to "Hello".
@@ -384,7 +385,7 @@ As before, you can use the console to observe the progression of the change thro
 Make sure that you remember to tear down the stack when finshed to avoid unnecessary charges. You can free up resources as follows:
 
 ```
-cd aws-apprunner-terraform/terraform
+cd ~/environment/aws-apprunner-terraform/terraform
 terraform destroy
 ```
 

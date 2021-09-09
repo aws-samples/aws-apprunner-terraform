@@ -110,3 +110,10 @@ variable "apprunner-service-role" {
 variable "codebuild_cache_bucket_name" {
   description = "Bucketname to use for storing codebuild cache artifacts"
 }
+variable "codecommit_username" {
+  description = "Codecommit user name for config and push orperation"
+}
+variable "codecommit_email" {
+  description = "Codecommit email for git push orperation"
+}
+

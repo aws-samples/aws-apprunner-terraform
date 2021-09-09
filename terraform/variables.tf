@@ -78,7 +78,10 @@ variable "db_initialize_mode" {
   description = "RDS initialize"
   default     = "always"
 }
-
+variable "ssm_parameter_store_name" {
+  description = "RDS DB Password Parameter Store name"
+  default     = "always"
+}
 # Source repo name and branch
 
 variable "source_repo_name" {

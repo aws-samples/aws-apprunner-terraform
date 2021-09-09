@@ -24,7 +24,7 @@ resource "aws_apprunner_service" "service" {
       image_repository_type = "ECR"
     }
   }
-  depends_on = [aws_iam_role.apprunner-service-role, aws_db_instance.db, aws_route_table.private-route-table]
+  depends_on = [aws_iam_role.apprunner-service-role, aws_db_instance.db, aws_route_table.private-route-table, null_resource.petclinic_springboot]
 }
 
 output "apprunner_service_url" {

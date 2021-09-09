@@ -5,8 +5,10 @@ resource "null_resource" "push_petcliniccode" {
 	cd ../petclinic/
 	git config --global --unset credential.helper
 	git config --system --unset credential.helper
-	git config --global user.name "Imtranur Rahman"
-	git config --global user.email imtranur@amazon.com
+#	git config --global user.name "Imtranur Rahman"
+	git config --global user.name ${var.codecommit_username}
+	git config --global user.email ${var.codecommit_email}
+#	git config --global user.email imtranur@amazon.com
 	git init
 	git add .
 	git commit -m "Baseline commit"

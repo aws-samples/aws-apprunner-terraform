@@ -10,7 +10,7 @@
 
 This workshop is designed to enable engineers to get some hands-on experience using AWS CI/CD tools to build pipelines for Serverless Container workloads. The workshop consists of a number of lab modules, each designed to demonstrate a CI/CD pattern. You will be using AWS services like AWS App Runner, Amazon RDS, AWS CodePipeline, AWS CodeCommit and AWS CodeBuild. 
 
-[AWS App Runner](https://aws.amazon.com/apprunner/) leverages AWS best practices and technologies for deploying and running containerized web applications at scale. This leads to a drastic reduction in your time to market for new applications and features. App Runner runs on top of AWS ECS and Fargate. App Runner is a lot easier to get into, cost estimation for App Runner is far simpler — AWS changes a fixed CPU and Memory fee per second.
+[AWS App Runner](https://aws.amazon.com/apprunner/) leverages AWS best practices and technologies for deploying and running containerized web applications at scale. This leads to a drastic reduction in your time to market for new applications and features. App Runner runs on top of AWS ECS and Fargate. App Runner is a lot easier to get into, cost estimation for App Runner is far simpler — AWS charges a fixed CPU and Memory fee per second.
 
 ## Background
 

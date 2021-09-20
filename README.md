@@ -387,7 +387,7 @@ As before, you can use the console to observe the progression of the change thro
 
 ## Tearing down the stack
 
-**Note:** If you are participating in this workshop at an AWS-hosted event using Event Engine and a provided AWS account, you do not need to complete this module. We will cleanup all managed accounts afterwards on your behalf.
+**Note:** If you are participating in this workshop at an AWS-hosted event using Event Engine and a provided AWS account, you do not need to complete this step. We will cleanup all managed accounts afterwards on your behalf.
 
 Make sure that you remember to tear down the stack when finshed to avoid unnecessary charges. You can free up resources as follows:
 

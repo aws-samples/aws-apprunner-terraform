@@ -75,6 +75,7 @@ resource "aws_iam_role_policy_attachment" "codepipeline-attach" {
 }
 
 resource "aws_s3_bucket" "artifact_bucket" {
+  force_destroy = true
 }
 
 # CodePipeline 

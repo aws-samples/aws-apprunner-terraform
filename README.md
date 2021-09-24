@@ -10,7 +10,7 @@
 
 This workshop is designed to enable engineers to get some hands-on experience using AWS CI/CD tools to build pipelines for Serverless Container workloads. The workshop consists of a number of lab modules, each designed to demonstrate a CI/CD pattern. You will be using AWS services like AWS App Runner, Amazon RDS, AWS CodePipeline, AWS CodeCommit and AWS CodeBuild. 
 
-[AWS App Runner](https://aws.amazon.com/apprunner/) leverages AWS best practices and technologies for deploying and running containerized web applications at scale. This leads to a drastic reduction in your time to market for new applications and features. App Runner runs on top of AWS ECS and Fargate. App Runner is a lot easier to get into, cost estimation for App Runner is far simpler — AWS changes a fixed CPU and Memory fee per second.
+[AWS App Runner](https://aws.amazon.com/apprunner/) leverages AWS best practices and technologies for deploying and running containerized web applications at scale. This leads to a drastic reduction in your time to market for new applications and features. App Runner runs on top of AWS ECS and Fargate. App Runner is a lot easier to get into, cost estimation for App Runner is far simpler — AWS charges a fixed CPU and Memory fee per second.
 
 ## Background
 
@@ -33,7 +33,7 @@ Ensure you have access to an AWS account, and a set of credentials with *Adminis
 
 ### Create an AWS Cloud9 environment
 
-Log into the AWS Management Console and search for Cloud9 services in the search bar. Click Cloud9 and create an AWS Cloud9 environment in the `us-east-1` region based on Amazon Linux 2.
+Log into the AWS Management Console and search for Cloud9 services in the search bar. Click Cloud9 and create an AWS Cloud9 environment in the `us-east-1` region based on Amazon Linux 2. You can select the instance type as t2.micro.
 
 ### Configure the AWS Cloud9 environment
 
@@ -71,7 +71,7 @@ By default, Cloud9 manages temporary IAM credentials for you.  Unfortunately the
     ```
 
 #### Upgrade awscli
-Ensure you are running the latest version of AWS CLI:
+To ensure you are running the latest version of AWS CLI, run the following command:
 
 ```bash
 aws --version
@@ -177,7 +177,7 @@ docker run -it --rm -p 8080:80  --name petclinic petclinic
 This will run the application using container port of 80 and will expose the application to host port of 8080. Click Preview from the top menu and then click “Preview Running Application.” It will open a browser displaying the Spring Petclinic application.
 
 ## Push Petclinic docker image to Amazon ECR
-Run the following inside the Cloud9 terminal:
+On your Cloud9 IDE open a new terminal and run the following inside the new terminal:
 
 ```bash
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text)
@@ -239,15 +239,18 @@ Wait for Terraform to complete the build before proceeding. It will take few min
 ### Explore the stack you have built
 
 Once the build is complete, you can explore your environment using the AWS console:
+- View the App Runner service using the [AWS App Runner console](https://console.aws.amazon.com/apprunner/)
 - View the RDS database using the [Amazon RDS console](https://console.aws.amazon.com/rds).
 - View the ECR repo using the [Amazon ECR console](https://console.aws.amazon.com/ecr).
 - View the CodeCommit repo using the [AWS CodeCommit console](https://console.aws.amazon.com/codecommit).
 - View the CodeBuild project using the [AWS CodeBuild console](https://console.aws.amazon.com/codebuild).
 - View the pipeline using the [AWS CodePipeline console](https://console.aws.amazon.com/codepipeline).
 
+
 Note that your pipeline starts in a failed state. That is because there is no code to build in the CodeCommit repo! In the next step you will push the petclinic app into the repo to trigger the pipeline.
 
 ### Explore the App Runner service
+Open the App Runner service configuration file [terraform/services.tf](terraform/services.tf) file and explore the options specified in the file.
 
 ```typescript
  image_repository {
@@ -265,6 +268,8 @@ Note that your pipeline starts in a failed state. That is because there is no co
       image_repository_type = "ECR"
     }
 ```
+**Note:** In a production environment it is a best practice to use a meaningful tag instead of using the `:latest` tag.
+
 ## Deploy petclinic application using the pipeline
 
 You will now use git to push the petclinic application through the pipeline.
@@ -305,7 +310,7 @@ git config --global credential.helper '!aws codecommit credential-helper $@'
 git config --global credential.UseHttpPath true
 ```
 
-From the output of the Terraform build, note the Terraform output `source_repo_clone_url_http`.
+From the output of the Terraform build, we use the output `source_repo_clone_url_http` in our next step.
 
 ```bash
 cd ~/environment/aws-apprunner-terraform/terraform
@@ -381,6 +386,8 @@ git push origin master
 As before, you can use the console to observe the progression of the change through the pipeline. Once done, verify that the application is working with the modified welcome message.
 
 ## Tearing down the stack
+
+**Note:** If you are participating in this workshop at an AWS-hosted event using Event Engine and a provided AWS account, you do not need to complete this step. We will cleanup all managed accounts afterwards on your behalf.
 
 Make sure that you remember to tear down the stack when finshed to avoid unnecessary charges. You can free up resources as follows:
 

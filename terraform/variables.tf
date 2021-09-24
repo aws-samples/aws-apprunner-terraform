@@ -78,7 +78,10 @@ variable "db_initialize_mode" {
   description = "RDS initialize"
   default     = "always"
 }
-
+variable "ssm_parameter_store_name" {
+  description = "RDS DB Password Parameter Store name"
+  default     = "always"
+}
 # Source repo name and branch
 
 variable "source_repo_name" {
@@ -107,3 +110,10 @@ variable "apprunner-service-role" {
 variable "codebuild_cache_bucket_name" {
   description = "Bucketname to use for storing codebuild cache artifacts"
 }
+variable "codecommit_username" {
+  description = "Codecommit user name for config and push orperation"
+}
+variable "codecommit_email" {
+  description = "Codecommit email for git push orperation"
+}
+

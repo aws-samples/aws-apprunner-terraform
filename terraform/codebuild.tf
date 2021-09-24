@@ -43,7 +43,10 @@ resource "aws_iam_policy" "codebuild_policy" {
         "s3:GetObject", "s3:GetObjectVersion", "s3:PutObject"
       ],
       "Effect": "Allow",
-      "Resource": "${aws_s3_bucket.artifact_bucket.arn}/*"
+      "Resource": [
+        "${aws_s3_bucket.artifact_bucket.arn}/*",
+        "${aws_s3_bucket.cache.arn}/*"
+      ]
     },
     {
       "Action": [
@@ -80,12 +83,13 @@ resource "aws_iam_role_policy_attachment" "codebuild-attach" {
 resource "aws_s3_bucket" "cache" {
   bucket = var.codebuild_cache_bucket_name # workaround from https://github.com/hashicorp/terraform-provider-aws/issues/10195
   acl    = "private"
+  force_destroy = true
 }
 
 resource "aws_codebuild_project" "codebuild" {
   depends_on = [
     aws_codecommit_repository.source_repo,
-    # aws_ecr_repository.image_repo
+    aws_ecr_repository.petclinic
   ]
   name         = "codebuild-${var.source_repo_name}-${var.source_repo_branch}"
   service_role = aws_iam_role.codebuild_role.arn

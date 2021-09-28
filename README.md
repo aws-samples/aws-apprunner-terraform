@@ -227,7 +227,11 @@ aws ssm put-parameter --name /database/password  --value mysqlpassword --type Se
 cd ~/environment/aws-apprunner-terraform/terraform
 ```
 
-Edit `terraform.tfvars`, leave the `aws_profile` as `"default"`, and ensure `aws_region` matches your environment, and update `codebuild_cache_bucket_name` to replace the placeholder `yyyymmdd` with today's date, and the identifier `identifier` with something unique to you to create globally unique S3 bucket name. S3 bucket names can include numbers, lowercase letters and hyphens.
+Edit `terraform.tfvars` to make these changes:
+* leave the `aws_profile` as `"default"`
+* ensure `aws_region` matches your environment
+* update `codebuild_cache_bucket_name` to replace the placeholder `yyyymmdd` with today's date, and the identifier `identifier` with something unique to you to create globally unique S3 bucket name. S3 bucket names can include numbers, lowercase letters and hyphens.
+* update `codecommit_username` and `codecommit_email` with your own name and email address so that your commits are attributed to you.
 
 ### Build
 

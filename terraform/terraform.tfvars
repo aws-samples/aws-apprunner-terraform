@@ -1,4 +1,6 @@
 codebuild_cache_bucket_name="apprunner-cache-yyyymmdd-identifier"
+codecommit_username="Your Name"
+codecommit_email="you@example.com"
 aws_region="us-east-1"
 stack="apprunner-workshop"
 aws_ecr="petclinic"

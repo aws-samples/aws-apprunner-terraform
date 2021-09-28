@@ -19,6 +19,7 @@ The Spring PetClinic sample application is designed to show how the Spring appli
 ## Contributor
 
 1. Irshad A Buchh, Amazon Web Services
+1. Rylie Knox, Amazon Web Services
 
 ## Architecture
 ![Architecture](images/Architecture.png)
@@ -26,6 +27,9 @@ The Spring PetClinic sample application is designed to show how the Spring appli
 ## Prerequisites
 
 Before you build the whole infrastructure, including your CI/CD pipeline, you will need to meet the following pre-requisites.
+
+<details>
+  <summary>Self-paced in your own AWS account</summary>
 
 ### AWS account
 
@@ -82,11 +86,18 @@ Run `aws configure` to configure your region. Leave all the other fields blank. 
 
 ```
 admin:~/environment $ aws configure
-AWS Access Key ID [None]: 
-AWS Secret Access Key [None]: 
+AWS Access Key ID [None]:
+AWS Secret Access Key [None]:
 Default region name [None]: us-east-1
-Default output format [None]: 
+Default output format [None]:
 ```
+</details>
+
+<details>
+  <summary>Participating at an AWS event using a provided AWS account</summary>
+
+  You will be provided a URL and a code to provide you access to an AWS account that is already provisioned with resources that have been configured. This allows you to skip the manual steps to get right to exploring App Runner.
+</details>
 
 #### Install Terraform
 

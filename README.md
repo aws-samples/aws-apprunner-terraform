@@ -191,12 +191,6 @@ We shall use Terraform to build the above architecture including the AWS CodePip
 
 **Note:** This workshop will create chargeable resources in your account. When finished, please make sure you clean up resources as instructed at the end.
 
-### Set up SSM parameter for DB passwd
-
-```bash
-aws ssm put-parameter --name /database/password  --value mysqlpassword --type SecureString
-```
-
 ### Edit terraform variables
 
 ```bash
@@ -208,6 +202,15 @@ Edit `terraform.tfvars` to make these changes:
 * ensure `aws_region` matches your environment
 * update `codebuild_cache_bucket_name` to replace the placeholder `yyyymmdd` with today's date, and the identifier `identifier` with something unique to you to create globally unique S3 bucket name. S3 bucket names can include numbers, lowercase letters and hyphens.
 * update `codecommit_username` and `codecommit_email` with your own name and email address so that your commits are attributed to you.
+
+### Set up SSM parameter for DB passwd
+
+```bash
+aws ssm put-parameter --name /database/password  --value mysqlpassword --type SecureString
+```
+
+This will use AWS Systems Manager Parameter Store to create a parameter for securely handling sensitive values like passwords. The name value `/database/password` is passed into our application via an environment variable and that name needs to match the `ssm_parameter_store_name` in terraform.tfvars. When our application starts, it will retrieve the password from Parameter Store and pass it along to our application via an environment variable. The environment variables we configure for App Runner is easily accessible so care should be taken with sensitive information.
+
 
 ### Build
 

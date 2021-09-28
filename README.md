@@ -99,21 +99,6 @@ Default output format [None]:
   You will be provided a URL and a code to provide you access to an AWS account that is already provisioned with resources that have been configured. This allows you to skip the manual steps to get right to exploring App Runner.
 </details>
 
-#### Install Terraform
-
-Download and install Terraform:
-
-```bash
-sudo yum install -y yum-utils
-sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
-sudo yum -y install terraform
-```
-
-Verify that you can run Terraform:
-
-```bash
-terraform version
-```
 
 #### Install Apache Maven
 
@@ -143,15 +128,6 @@ source ~/.bashrc
 mvn --version
 ```
 #### Clone workshop repository
-<!---
-You will need to import the workshop files into your Cloud9 environment:
-
-```bash
-wget https://github.com/aws-samples/aws-ecs-cicd-terraform/archive/master.zip
-unzip master.zip
-cd aws-ecs-cicd-terraform-master
-```
--->
 
 Clone the source code repository:
 

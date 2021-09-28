@@ -97,36 +97,14 @@ Default output format [None]:
   <summary>Participating at an AWS event using a provided AWS account</summary>
 
   You will be provided a URL and a code to provide you access to an AWS account that is already provisioned with resources that have been configured. This allows you to skip the manual steps to get right to exploring App Runner.
+
+  Once you are logged into the console, in the ![Cloud9 Console](https://console.aws.amazon.com/cloud) you should see a pre-provisioned environment. Click the "Open IDE" button and within a couple minutes. Close the `Welcome` tab and open a new `Terminal` tab.
+
+  ![Cloud9](images/Cloud9.png)
 </details>
 
 
-#### Install Apache Maven
 
-```bash
-cd /tmp
-sudo wget https://www-eu.apache.org/dist/maven/maven-3/3.8.1/binaries/apache-maven-3.8.1-bin.tar.gz
-sudo tar xf /tmp/apache-maven-*.tar.gz -C /opt
-sudo ln -s /opt/apache-maven-3.8.1 /opt/maven
-
-```
-#### Setup Apache Maven
-
-```bash
-sudo nano ~/.bashrc
-```
-Paste the following lines at the end of the file:
-
-```bash
-export M2_HOME=/opt/maven
-export MAVEN_HOME=/opt/maven
-export PATH=${M2_HOME}/bin:${PATH}
-```
-Verify the Apache Maven installation:
-
-```bash
-source ~/.bashrc
-mvn --version
-```
 #### Clone workshop repository
 
 Clone the source code repository:

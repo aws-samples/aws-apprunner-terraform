@@ -133,15 +133,6 @@ Verify the Apache Maven installation:
 mvn --version
 ```
 
-#### Clone workshop repository
-
-Clone the source code repository:
-
-```bash
-cd ~/environment
-git clone https://github.com/aws-samples/aws-apprunner-terraform.git
-```
-
 
 ## Build the infrastructure and pipeline
 

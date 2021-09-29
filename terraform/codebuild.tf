@@ -89,7 +89,8 @@ resource "aws_s3_bucket" "cache" {
 resource "aws_codebuild_project" "codebuild" {
   depends_on = [
     aws_codecommit_repository.source_repo,
-    aws_ecr_repository.petclinic
+    aws_ecr_repository.petclinic,
+    aws_iam_policy.codebuild_policy
   ]
   name         = "codebuild-${var.source_repo_name}-${var.source_repo_branch}"
   service_role = aws_iam_role.codebuild_role.arn

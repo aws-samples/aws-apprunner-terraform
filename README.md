@@ -201,9 +201,10 @@ While terraform is still running, we can open a new terminal by clicking on the 
 ```bash
 docker run -it --rm -p 8080:80  --name petclinic petclinic
 ```
-![ApplicationLocal](images/docker-local-run.png)
 
 This will run the application using container port of 80 and will expose the application to host port of 8080. Click Preview from the top menu and then click “Preview Running Application.” It will open a browser displaying the Spring Petclinic application.
+
+![ApplicationLocal](images/docker-local-run.png)
 
 When finished exploring the application, you can close the Preview tab, and with the terminal window running our Docker Container focused, press Control-C to stop the container to release resources.
 

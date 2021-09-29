@@ -1,4 +1,4 @@
-# Build and Deploy Spring Petclinic Application to AWS App Runner using AWS CodePipeline, Amazon RDS and Terraform 
+# Build and Deploy Spring Petclinic Application to AWS App Runner using AWS CodePipeline, Amazon RDS and Terraform
 
 ![Build Status](https://codebuild.us-east-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiSy9rWmVENzRDbXBoVlhYaHBsNks4OGJDRXFtV1IySmhCVjJoaytDU2dtVWhhVys3NS9Odk5DbC9lR2JUTkRvSWlHSXZrNVhYQ3ZsaUJFY3o4OERQY1pnPSIsIml2UGFyYW1ldGVyU3BlYyI6IlB3ODEyRW9KdU0yaEp6NDkiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master)
 [![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/aws/aws-cdk)
@@ -8,13 +8,13 @@
 
 ## Introduction
 
-This workshop is designed to enable engineers to get some hands-on experience using AWS CI/CD tools to build pipelines for Serverless Container workloads. The workshop consists of a number of lab modules, each designed to demonstrate a CI/CD pattern. You will be using AWS services like AWS App Runner, Amazon RDS, AWS CodePipeline, AWS CodeCommit and AWS CodeBuild. 
+This workshop is designed to enable engineers to get some hands-on experience using AWS CI/CD tools to build pipelines for Serverless Container workloads. The workshop consists of a number of lab modules, each designed to demonstrate a CI/CD pattern. You will be using AWS services like AWS App Runner, Amazon RDS, AWS CodePipeline, AWS CodeCommit and AWS CodeBuild.
 
 [AWS App Runner](https://aws.amazon.com/apprunner/) leverages AWS best practices and technologies for deploying and running containerized web applications at scale. This leads to a drastic reduction in your time to market for new applications and features. App Runner runs on top of AWS ECS and Fargate. App Runner is a lot easier to get into, cost estimation for App Runner is far simpler — AWS charges a fixed CPU and Memory fee per second.
 
 ## Background
 
-The Spring PetClinic sample application is designed to show how the Spring application framework can be used to build simple, but powerful database-oriented applications. It uses AWS RDS (MySQL) at the backend and it will demonstrate the use of Spring's core functionality. The Spring Framework is a collection of small, well-focused, loosely coupled Java frameworks that can be used independently or collectively to build industrial strength applications of many different types. 
+The Spring PetClinic sample application is designed to show how the Spring application framework can be used to build simple, but powerful database-oriented applications. It uses AWS RDS (MySQL) at the backend and it will demonstrate the use of Spring's core functionality. The Spring Framework is a collection of small, well-focused, loosely coupled Java frameworks that can be used independently or collectively to build industrial strength applications of many different types.
 
 ## Contributor
 
@@ -98,12 +98,40 @@ Default output format [None]:
 
   You will be provided a URL and a code to provide you access to an AWS account that is already provisioned with resources that have been configured. This allows you to skip the manual steps to get right to exploring App Runner.
 
-  Once you are logged into the console, in the ![Cloud9 Console](https://console.aws.amazon.com/cloud) you should see a pre-provisioned environment. Click the "Open IDE" button and within a couple minutes. Close the `Welcome` tab and open a new `Terminal` tab.
+  Once you are logged into the console, in the [Cloud9 Console](https://console.aws.amazon.com/cloud) you should see a pre-provisioned environment. Click the "Open IDE" button and within a couple minutes. Close the `Welcome` tab and open a new `Terminal` tab.
 
   ![Cloud9](images/Cloud9.png)
 </details>
 
+#### Install Apache Maven
 
+First, we need to install Apache Maven. Run the following commands in the terminal window to fetch and install Maven.
+
+```bash
+cd /tmp
+sudo wget https://www-eu.apache.org/dist/maven/maven-3/3.8.1/binaries/apache-maven-3.8.1-bin.tar.gz
+sudo tar xf /tmp/apache-maven-*.tar.gz -C /opt
+sudo ln -s /opt/apache-maven-3.8.1 /opt/maven
+```
+
+#### Setup Apache Maven
+
+Now that Maven is installed, we need to set some environment variables. The following commands will add a few lines to our .bashrc and source it to bring the changes into our current shell.
+
+```bash
+cat << 'EOF' >> ~/.bashrc
+export M2_HOME=/opt/maven
+export MAVEN_HOME=/opt/maven
+export PATH=${M2_HOME}/bin:${PATH}
+EOF
+source ~/.bashrc
+```
+
+Verify the Apache Maven installation:
+
+```bash
+mvn --version
+```
 
 #### Clone workshop repository
 
@@ -114,22 +142,6 @@ cd ~/environment
 git clone https://github.com/aws-samples/aws-apprunner-terraform.git
 ```
 
-## Package the application using Apache Maven
-
-```bash
-cd ~/environment/aws-apprunner-terraform/petclinic
-mvn package -Dmaven.test.skip=true
-```
-The first time you execute this (or any other) command, Maven will need to download the plugins and related dependencies it needs to fulfill the command. From a clean installation of Maven, this can take some time (note: in the output above, it took almost five minutes). If you execute the command again, Maven will now have what it needs, so it won’t need to download anything new and will be able to execute the command quicker.
-
-The compiled java classes were placed in spring-petclinic/target/classes, which is another standard convention employed by Maven. By using the standard conventions, the POM above is small and you haven’t had to tell Maven explicitly where any of your sources are or where the output should go. By following the standard Maven conventions, you can do a lot with little effort.
-
-## Build and tag the Petclinic docker image
-From the petclinic directory:
-
-```bash
-docker build -t petclinic .
-```
 
 ## Run Petclinic application locally
 Run the following inside the Cloud9 terminal:
@@ -140,28 +152,6 @@ docker run -it --rm -p 8080:80  --name petclinic petclinic
 ![ApplicationLocal](images/docker-local-run.png)
 
 This will run the application using container port of 80 and will expose the application to host port of 8080. Click Preview from the top menu and then click “Preview Running Application.” It will open a browser displaying the Spring Petclinic application.
-
-## Push Petclinic docker image to Amazon ECR
-On your Cloud9 IDE open a new terminal and run the following inside the new terminal:
-
-```bash
-AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text)
-AWS_REGION=$(aws configure get region)
-
-export REPOSITORY_NAME=petclinic
-export IMAGE_NAME=petclinic
-
-aws ecr create-repository \
-    --repository-name $REPOSITORY_NAME \
-    --image-scanning-configuration scanOnPush=true \
-    --region $AWS_REGION
-	
-aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
-
-docker tag $IMAGE_NAME $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_NAME
-docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_NAME
-
-```
 
 ## Build the infrastructure and pipeline
 
@@ -206,7 +196,13 @@ terraform apply
 
 Terraform will display an action plan. When asked whether you want to proceed with the actions, enter `yes`.
 
-Wait for Terraform to complete the build before proceeding. It will take few minutes to complete “terraform apply” 
+Wait for Terraform to complete the build before proceeding. It will take few minutes to complete “terraform apply”. If an operation times out, simply rerun `terraform apply`.
+
+### What's Terraform doing?
+
+This step typically takes about 10-15 minutes to complete as Terraform does a lot of heavy lifting for us! While terraform is setting up the infrastructure, in parallel it is also running a script in `appbuild.tf` to use Maven to build our application, fetching all of the dependencies, and then creating a docker image, tagging it and pushing it to our newly created ECR repository.
+
+
 
 ### Explore the stack you have built
 

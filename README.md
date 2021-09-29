@@ -143,16 +143,6 @@ git clone https://github.com/aws-samples/aws-apprunner-terraform.git
 ```
 
 
-## Run Petclinic application locally
-Run the following inside the Cloud9 terminal:
-
-```bash
-docker run -it --rm -p 8080:80  --name petclinic petclinic
-```
-![ApplicationLocal](images/docker-local-run.png)
-
-This will run the application using container port of 80 and will expose the application to host port of 8080. Click Preview from the top menu and then click “Preview Running Application.” It will open a browser displaying the Spring Petclinic application.
-
 ## Build the infrastructure and pipeline
 
 We shall use Terraform to build the above architecture including the AWS CodePipeline.
@@ -171,7 +161,7 @@ Edit `terraform.tfvars` to make these changes:
 * update `codebuild_cache_bucket_name` to replace the placeholder `yyyymmdd` with today's date, and the identifier `identifier` with something unique to you to create globally unique S3 bucket name. S3 bucket names can include numbers, lowercase letters and hyphens.
 * update `codecommit_username` and `codecommit_email` with your own name and email address so that your commits are attributed to you.
 
-### Set up SSM parameter for DB passwd
+### Set up SSM parameter for DB password
 
 ```bash
 aws ssm put-parameter --name /database/password  --value mysqlpassword --type SecureString
@@ -202,7 +192,20 @@ Wait for Terraform to complete the build before proceeding. It will take few min
 
 This step typically takes about 10-15 minutes to complete as Terraform does a lot of heavy lifting for us! While terraform is setting up the infrastructure, in parallel it is also running a script in `appbuild.tf` to use Maven to build our application, fetching all of the dependencies, and then creating a docker image, tagging it and pushing it to our newly created ECR repository.
 
+## Run Petclinic application locally
 
+Once the local build process has completed and the docker image has been created, we can run the container to test it locally from our Cloud9 environment.
+
+While terraform is still running, we can open a new terminal by clicking on the green plus sign at the end of the list of tabs on the lower half of the wind and select "New Terminal". Run the following inside the Cloud9 terminal:
+
+```bash
+docker run -it --rm -p 8080:80  --name petclinic petclinic
+```
+![ApplicationLocal](images/docker-local-run.png)
+
+This will run the application using container port of 80 and will expose the application to host port of 8080. Click Preview from the top menu and then click “Preview Running Application.” It will open a browser displaying the Spring Petclinic application.
+
+When finished exploring the application, you can close the Preview tab, and with the terminal window running our Docker Container focused, press Control-C to stop the container to release resources.
 
 ### Explore the stack you have built
 
@@ -215,18 +218,24 @@ Once the build is complete, you can explore your environment using the AWS conso
 - View the pipeline using the [AWS CodePipeline console](https://console.aws.amazon.com/codepipeline).
 
 
-Note that your pipeline starts in a failed state. That is because there is no code to build in the CodeCommit repo! In the next step you will push the petclinic app into the repo to trigger the pipeline.
 
 ### Explore the App Runner service
 Open the App Runner service configuration file [terraform/services.tf](terraform/services.tf) file and explore the options specified in the file.
 
 ```typescript
- image_repository {
+resource "aws_apprunner_service" "service" {
+  auto_scaling_configuration_arn = aws_apprunner_auto_scaling_configuration_version.auto-scaling-config.arn
+  service_name                   = "apprunner-petclinic"
+  source_configuration {
+    authentication_configuration {
+      access_role_arn = aws_iam_role.apprunner-service-role.arn
+    }
+    image_repository {
       image_configuration {
         port = var.container_port
         runtime_environment_variables = {
+          "AWS_REGION" : "${var.aws_region}",
           "spring.datasource.username" : "${var.db_user}",
-          "spring.datasource.password" : "${data.aws_ssm_parameter.dbpassword.value}",
           "spring.datasource.initialization-mode" : var.db_initialize_mode,
           "spring.profiles.active" : var.db_profile,
           "spring.datasource.url" : "jdbc:mysql://${aws_db_instance.db.address}/${var.db_name}"
@@ -235,61 +244,29 @@ Open the App Runner service configuration file [terraform/services.tf](terraform
       image_identifier      = "${data.aws_ecr_repository.image_repo.repository_url}:latest"
       image_repository_type = "ECR"
     }
+  }
+  instance_configuration {
+    instance_role_arn = aws_iam_role.apprunner-instance-role.arn
+  }
+  depends_on = [aws_iam_role.apprunner-service-role, aws_db_instance.db, aws_route_table.private-route-table, null_resource.petclinic_springboot]
+}
 ```
+
+The `source_configuration` section is the most interesting segment of this template. The `image_configuration` section defines the port that our container is listening on, as well as sets various environment variables to be passed to it. While the `image_identifier` and `image_repository_type` values specify which container this application should use. This section also references other resources like IAM policies to be used for pulling the image (`authentication_configuration`) and for the container to run under (`instance_configuration`) as well as defining the autoscaling configuration.
+
 **Note:** In a production environment it is a best practice to use a meaningful tag instead of using the `:latest` tag.
 
 ## Deploy petclinic application using the pipeline
 
 You will now use git to push the petclinic application through the pipeline.
 
+Terraform has already created a local repo for the petclinic application, configured our username and email, and added our new CodeCommit repo as a remote tracking branch, so we are all ready to push changes. The template for this is in `push2codecommit.tf`.
 
 
-### Set up a local git repo for the petclinic application
-
-Start by switching to the `petclinic` directory:
-
-```bash
-cd ~/environment/aws-apprunner-terraform/petclinic
-```
-
-Set up your git username and email address:
-
-```bash
-git config --global user.name "Your Name"
-git config --global user.email you@example.com
-```
-
-Now ceate a local git repo for petclinic as follows:
-
-```bash
-git init
-git add .
-git commit -m "Baseline commit"
-```
-
-### Set up the remote CodeCommit repo
-
-An AWS CodeCommit repo was built as part of the pipeline you created. You will now set this up as a remote repo for your local petclinic repo.
-
-For authentication purposes, you can use the AWS IAM git credential helper to generate git credentials based on your IAM role permissions. Run:
-
-```bash
-git config --global credential.helper '!aws codecommit credential-helper $@'
-git config --global credential.UseHttpPath true
-```
-
-From the output of the Terraform build, we use the output `source_repo_clone_url_http` in our next step.
-
-```bash
-cd ~/environment/aws-apprunner-terraform/terraform
-export tf_source_repo_clone_url_http=$(terraform output --raw source_repo_clone_url_http)
-```
-
-Set this up as a remote for your git repo as follows:
+We can verify that our remote is configured correctly by running the following commands:
 
 ```bash
 cd ~/environment/aws-apprunner-terraform/petclinic
-git remote add origin $tf_source_repo_clone_url_http
 git remote -v
 ```
 
@@ -309,8 +286,7 @@ To trigger the pipeline, push the master branch to the remote as follows:
 git push -u origin master
 ```
 
-The pipeline will pull the code, build the docker image, push it to ECR, and deploy it to your ECS cluster. This will take a few minutes.
-You can monitor the pipeline in the [AWS CodePipeline console](https://console.aws.amazon.com/codepipeline).
+
 
 
 ### Test the application
@@ -319,7 +295,7 @@ From the output of the Terraform build, note the Terraform output `apprunner_ser
 
 ```bash
 cd ~/environment/aws-apprunner-terraform/terraform
-export tf_apprunner_service_url=$(terraform output apprunner_service_url)
+export tf_apprunner_service_url=$(terraform output --raw apprunner_service_url)
 echo $tf_apprunner_service_url
 ```
 
@@ -351,13 +327,55 @@ Push the change to trigger pipeline:
 git push origin master
 ```
 
-As before, you can use the console to observe the progression of the change through the pipeline. Once done, verify that the application is working with the modified welcome message.
+The pipeline will pull the code, build the docker image, push it to ECR, and deploy it to your ECS cluster. This will take a few minutes for CodePipeline to build our new Container Image and push it to ECR, and then a few mintues for App Runner to bring up the new container and then cut traffic over to the new version.
+You can monitor the pipeline in the [AWS CodePipeline console](https://console.aws.amazon.com/codepipeline), and then you can monitor App Runner deploy progress in the [AWS App Runner Console](https://console.aws.amazon.com/apprunner).
+
+## Demonstrate Auto Scaling
+
+Next, we will generate some load against our application so we can see how it behaves under load and to trigger autoscaling. We will need to install [Locust](https://locust.io), a simple Python load testing tool. This is as simple as a single command:
+
+```bash
+pip install locust
+```
+
+Locust uses python code to specify how it behaves. There's a locustfile.py in the root of the repo and inspecting it reveals how simple it is to generate requests against the home page of the application.
+
+```
+from locust import HttpUser, task
+
+class WebUser(HttpUser):
+  @task
+  def index(self):
+    self.client.get("/")
+```
+
+We can start generating load by running this command:
+
+```bash
+cd ~/environment/aws-apprunner-terraform/
+locust --headless -u 1000 -r 5 -f locustfile.py -H $tf_apprunner_service_url
+```
+
+This will generate a maximum of 1000 users, adding 5 new user per second and it will run continually until we stop it by pressing Control-C.
+
+That command uses an environment variable which was set earlier in this workshop. In case you don't have that set in this terminal window, this is the command you'll need:
+
+```bash
+cd ~/environment/aws-apprunner-terraform/terraform
+export tf_apprunner_service_url=$(terraform output --raw apprunner_service_url)
+echo $tf_apprunner_service_url
+```
+
+Now that we are generating load, we can view how the application is responding by heading to the [AWS App Runner Console](https://console.aws.amazon.com/apprunner), selecting our application and then clicking into the Metrics tab. This page shows some of the CloudWatch metrics that are automatically collected. Data is collected at one minute intervals and by default the last 3 hours of data is displayed. We can focus on more recent data by clicking `1h` and we can get updated data by clicking on the reload button adjacent to the time selectors.
+
+As more users are being added to our load test, we will see the number of requests ramping up, and watch the number of active instances respond to the increase in load, and the effect it has on the latency of the requests. Ideally, all of the requests will be successfully served as 200 responses, but there may be some transient 400 or 500 errors if load is ramping up faster than we can initialize new application instances.
+
 
 ## Tearing down the stack
 
 **Note:** If you are participating in this workshop at an AWS-hosted event using Event Engine and a provided AWS account, you do not need to complete this step. We will cleanup all managed accounts afterwards on your behalf.
 
-Make sure that you remember to tear down the stack when finshed to avoid unnecessary charges. You can free up resources as follows:
+Make sure that you remember to tear down the stack when finished to avoid unnecessary charges. You can free up resources as follows:
 
 ```
 cd ~/environment/aws-apprunner-terraform/terraform
@@ -368,11 +386,8 @@ When prompted enter `yes` to allow the stack termination to proceed.
 
 Once complete, note that you will have to manually empty and delete the S3 bucket used by the pipeline.
 
-## Delete the Amazon ECR
+## Remove the Parameter Store database password
 
 ```bash
-aws ecr delete-repository \
-    --repository-name $REPOSITORY_NAME \
-	--region $AWS_REGION \
-    --force
+aws ssm delete-parameter --name /database/password
 ```

@@ -208,17 +208,6 @@ This will run the application using container port of 80 and will expose the app
 
 When finished exploring the application, you can close the Preview tab, and with the terminal window running our Docker Container focused, press Control-C to stop the container to release resources.
 
-### Explore the stack you have built
-
-Once the build is complete, you can explore your environment using the AWS console:
-- View the App Runner service using the [AWS App Runner console](https://console.aws.amazon.com/apprunner/)
-- View the RDS database using the [Amazon RDS console](https://console.aws.amazon.com/rds).
-- View the ECR repo using the [Amazon ECR console](https://console.aws.amazon.com/ecr).
-- View the CodeCommit repo using the [AWS CodeCommit console](https://console.aws.amazon.com/codecommit).
-- View the CodeBuild project using the [AWS CodeBuild console](https://console.aws.amazon.com/codebuild).
-- View the pipeline using the [AWS CodePipeline console](https://console.aws.amazon.com/codepipeline).
-
-
 
 ### Explore the App Runner service
 Open the App Runner service configuration file [terraform/services.tf](terraform/services.tf) file and explore the options specified in the file.
@@ -257,6 +246,17 @@ The `source_configuration` section is the most interesting segment of this templ
 
 **Note:** In a production environment it is a best practice to use a meaningful tag instead of using the `:latest` tag.
 
+### Explore the stack you have built
+
+Once the build is complete, you can explore your environment using the AWS console:
+- View the App Runner service using the [AWS App Runner console](https://console.aws.amazon.com/apprunner/)
+- View the RDS database using the [Amazon RDS console](https://console.aws.amazon.com/rds).
+- View the ECR repo using the [Amazon ECR console](https://console.aws.amazon.com/ecr).
+- View the CodeCommit repo using the [AWS CodeCommit console](https://console.aws.amazon.com/codecommit).
+- View the CodeBuild project using the [AWS CodeBuild console](https://console.aws.amazon.com/codebuild).
+- View the pipeline using the [AWS CodePipeline console](https://console.aws.amazon.com/codepipeline).
+
+
 ## Deploy petclinic application using the pipeline
 
 You will now use git to push the petclinic application through the pipeline.
@@ -279,17 +279,6 @@ origin  https://git-codecommit.eu-west-2.amazonaws.com/v1/repos/petclinic (push)
 ```
 
 
-### Trigger the pipeline
-
-To trigger the pipeline, push the master branch to the remote as follows:
-
-```bash
-git push -u origin master
-```
-
-
-
-
 ### Test the application
 
 From the output of the Terraform build, note the Terraform output `apprunner_service_url`.
@@ -303,7 +292,8 @@ echo $tf_apprunner_service_url
 Use this in your browser to access the application.
 
 ![Petclinic](images/petclinic.png)
-## Push a change through the pipeline and re-test
+
+### Push a change through the pipeline and re-test
 
 The pipeline can now be used to deploy any changes to the application.
 
@@ -329,7 +319,7 @@ git push origin master
 ```
 
 The pipeline will pull the code, build the docker image, push it to ECR, and deploy it to your ECS cluster. This will take a few minutes for CodePipeline to build our new Container Image and push it to ECR, and then a few mintues for App Runner to bring up the new container and then cut traffic over to the new version.
-You can monitor the pipeline in the [AWS CodePipeline console](https://console.aws.amazon.com/codepipeline), and then you can monitor App Runner deploy progress in the [AWS App Runner Console](https://console.aws.amazon.com/apprunner).
+You can monitor the pipeline in the [AWS CodePipeline console](https://console.aws.amazon.com/codepipeline), and then you can monitor App Runner deploy progress in the [AWS App Runner Console](https://console.aws.amazon.com/apprunner). Once that deploy completes, you should now see your updated welcome message when you refresh the application in your browser.
 
 ## Demonstrate Auto Scaling
 

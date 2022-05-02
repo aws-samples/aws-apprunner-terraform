@@ -1,0 +1,59 @@
+name: 'Terraform'
+
+on: pull_request
+
+env:
+  TF_IN_AUTOMATION: true
+
+jobs:
+  terraform-apply:
+    name: Apply
+    permissions:
+      id-token: write
+      contents: read
+    runs-on: ubuntu-latest
+    env:
+      KEY_PREFIX_NAME: ${{ github.event.repository.name }}
+      KEY_NAME: ${{ github.event.number }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-duration-seconds: 900
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+
+      - name: Adapt AWS Terraform Backend
+        id: aws-backend-write
+        run: |
+          cd ./terraform
+          sed -i -e "s/__KEY_PREFIX_NAME__/$KEY_PREFIX_NAME/g" ./provider.tf
+          sed -i -e "s/__KEY_NAME__/$KEY_NAME/g" ./provider.tf
+          cd ..
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: '1.0.2'
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: terraform
+
+      - name: Terraform new Workspace
+        run: terraform workspace select $workspace || terraform workspace new $workspace
+        working-directory: terraform
+        env:
+          workspace: ${{ github.event.repository.name }}-pr-${{ github.event.number }}
+
+      - name: Terraform Apply
+        id: Apply
+        if: github.event_name == 'pull_request'
+        run: terraform apply -auto-approve -var 'name=${{ github.event.repository.name }}' -var 'stage=pr-${{ github.event.number }}' -var 'branch=${{ github.head_ref }}'
+        working-directory: terraform
+        env:
+          TF_WORKSPACE: ${{ github.event.repository.name }}-pr-${{ github.event.number }}

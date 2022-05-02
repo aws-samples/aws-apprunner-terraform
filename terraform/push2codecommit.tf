@@ -3,18 +3,16 @@ resource "null_resource" "push_petcliniccode" {
   provisioner "local-exec" {
     command = <<EOT
 	cd ../petclinic/
-	git config --global --unset credential.helper
-	git config --system --unset credential.helper
-#	git config --global user.name "Imtranur Rahman"
-	git config --global user.name ${var.codecommit_username}
-	git config --global user.email ${var.codecommit_email}
-#	git config --global user.email imtranur@amazon.com
-	git init
-	git add .
-	git commit -m "Baseline commit"
-	git config --global credential.helper '!aws codecommit credential-helper $@'
-	git config --global credential.UseHttpPath true
-	git remote add origin ${aws_codecommit_repository.source_repo.clone_url_http}
+	#git config --global --unset credential.helper
+	#git config --system --unset credential.helper
+	#git config --global user.name ${var.codecommit_username}
+	#git config --global user.email ${var.codecommit_email}
+	#git init
+	#git add .
+	#git commit -m "Baseline commit"
+	#git config --global credential.helper '!aws codecommit credential-helper $@'
+	#git config --global credential.UseHttpPath true
+	#git remote add origin ${aws_codecommit_repository.source_repo.clone_url_http}
 	git remote -v
 	git push -u origin master
       EOT

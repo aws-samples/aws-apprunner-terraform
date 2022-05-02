@@ -114,6 +114,6 @@ variable "codecommit_username" {
   description = "Codecommit user name for config and push orperation"
 }
 variable "codecommit_email" {
-  description = "Codecommit email for git push orperation"
+  description = "Codecommit email for git push operation"
 }
 

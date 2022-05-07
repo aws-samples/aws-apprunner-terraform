@@ -1,5 +1,18 @@
 # ---------------------------------------------------------------------------------------------------------------------
-# APPRUNNER Service
+# APPRUNNER VPC CONNECTOR
+# ---------------------------------------------------------------------------------------------------------------------
+
+resource "aws_apprunner_vpc_connector" "connector" {
+  vpc_connector_name = "apprunner-petclinic-connector"
+  subnets            = aws_subnet.private.*.id
+  security_groups    = ["${aws_security_group.service-sg.id}"]
+  depends_on = [aws_security_group.service-sg]
+
+}
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# APPRUNNER SERVICE
 # ---------------------------------------------------------------------------------------------------------------------
 
 resource "aws_apprunner_service" "service" {
@@ -9,6 +22,7 @@ resource "aws_apprunner_service" "service" {
     authentication_configuration {
       access_role_arn = aws_iam_role.apprunner-service-role.arn
     }
+    
     image_repository {
       image_configuration {
         port = var.container_port
@@ -24,10 +38,19 @@ resource "aws_apprunner_service" "service" {
       image_repository_type = "ECR"
     }
   }
+  
   instance_configuration {
     instance_role_arn = aws_iam_role.apprunner-instance-role.arn
   }
-  depends_on = [aws_iam_role.apprunner-service-role, aws_db_instance.db, aws_route_table.private-route-table, null_resource.petclinic_springboot]
+  
+    network_configuration {
+      egress_configuration {
+        egress_type       = "VPC"
+        vpc_connector_arn = aws_apprunner_vpc_connector.connector.arn
+      }
+    }
+  
+  depends_on = [aws_iam_role.apprunner-service-role, aws_db_instance.db, aws_route_table.private-route-table, aws_apprunner_vpc_connector.connector, null_resource.petclinic_springboot]
 }
 
 output "apprunner_service_url" {

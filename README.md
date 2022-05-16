@@ -108,9 +108,10 @@ terraform version
 
 ```bash
 cd /tmp
-sudo wget https://www-eu.apache.org/dist/maven/maven-3/3.8.1/binaries/apache-maven-3.8.1-bin.tar.gz
+sudo wget https://dlcdn.apache.org/maven/maven-3/3.8.5/binaries/apache-maven-3.8.5-bin.tar.gz
+sudo gzip -d /tmp/apache-maven-3.8.5-bin.tar.gz 
 sudo tar xf /tmp/apache-maven-*.tar.gz -C /opt
-sudo ln -s /opt/apache-maven-3.8.1 /opt/maven
+sudo ln -s /opt/apache-maven-3.8.5 /opt/maven
 
 ```
 #### Setup Apache Maven

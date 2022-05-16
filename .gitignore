@@ -2,3 +2,6 @@
 terraform.tfstate
 terraform.tfstate.backup
 .DS_Store
+.idea
+.iml
+~$Architecture.drawio.bkp

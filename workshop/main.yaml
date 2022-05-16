@@ -266,6 +266,7 @@ Resources:
                 - echo "export M2_HOME=/opt/maven" >> /home/ec2-user/.bashrc
                 - echo "export MAVEN_HOME=/opt/maven" >> /home/ec2-user/.bashrc
                 - echo "export PATH=\${M2_HOME}/bin:\${PATH}" >> /home/ec2-user/.bashrc
+                - sudo su ec2-user
                 - source /home/ec2-user/.bashrc
                 - mvn --version
                 - cd /home/ec2-user/environment
@@ -274,7 +275,6 @@ Resources:
                 - git checkout update_dc_summit_22
                 - cd /home/ec2-user/environment/aws-apprunner-terraform/petclinic
                 - mvn package -Dmaven.test.skip=true
-                - sudo chown -R ec2-user.ec2-user /home/ec2-user/environment/aws-apprunner-terraform/ /home/ec2-user/.m2
                 - echo "Bootstrap completed with return code $?"
 
   AppRunnerC9BootstrapAssociation:

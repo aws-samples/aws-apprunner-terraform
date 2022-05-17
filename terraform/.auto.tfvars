@@ -1,4 +1,4 @@
-codebuild_cache_bucket_name="apprunner-cache-yyyymmdd-identifier"
+codebuild_cache_bucket_name="apprunner-cache-<accountId>"
 aws_region="us-east-1"
 stack="apprunner-workshop"
 aws_ecr="petclinic"

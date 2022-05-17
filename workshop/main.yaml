@@ -3,6 +3,10 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: AWS CloudFormation template creating a Cloud9 instance for DC Summit
   bootstraps the instance.
 Parameters:
+  ProjectRepositoryUrl:
+    Description: The source repository of this project
+    Type: String
+    Default: https://github.com/aws-samples/aws-apprunner-terraform
   AppRunnerC9InstanceType:
     Description: App Runner Cloud9 instance type
     Type: String
@@ -268,8 +272,7 @@ Resources:
                 - echo "export PATH=\${M2_HOME}/bin:\${PATH}" >> /home/ec2-user/.bashrc
                 - source /home/ec2-user/.bashrc
                 - mvn --version
-                - sudo su - ec2-user -c "cd /home/ec2-user/environment && git clone https://github.com/gdunkle/aws-apprunner-terraform"
-                - sudo su - ec2-user -c "cd /home/ec2-user/environment/aws-apprunner-terraform && git checkout update_dc_summit_22"
+                - !Sub "sudo su - ec2-user -c \"cd /home/ec2-user/environment && git clone ${ProjectRepositoryUrl}\""
                 - sudo su - ec2-user -c "cd /home/ec2-user/environment/aws-apprunner-terraform/petclinic && mvn package -Dmaven.test.skip=true"
                 - echo "Bootstrap completed with return code $?"
 

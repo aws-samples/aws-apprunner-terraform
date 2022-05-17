@@ -5,3 +5,4 @@ terraform.tfstate.backup
 .idea
 .iml
 ~$Architecture.drawio.bkp
+**/target

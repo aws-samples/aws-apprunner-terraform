@@ -1,0 +1,338 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AWS CloudFormation template creating a Cloud9 instance for DC Summit
+  bootstraps the instance.
+Parameters:
+  ProjectRepositoryUrl:
+    Description: The source repository of this project
+    Type: String
+    Default: https://github.com/aws-samples/aws-apprunner-terraform
+  AppRunnerC9InstanceType:
+    Description: App Runner Cloud9 instance type
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+      - t3.micro
+      - t3.small
+      - t3.medium
+
+
+
+Resources:
+  ################## PERMISSIONS AND ROLES #################
+  AppRunnerC9Role:
+    Type: AWS::IAM::Role
+    Properties:
+      Tags:
+        - Key: Environment
+          Value: AWS App Runner
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+                - ssm.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+      Path: "/"
+  AppRunnerC9LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName:
+            Fn::Join:
+              - ''
+              - - AppRunnerC9LambdaPolicy-
+                - Ref: AWS::Region
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*
+              - Effect: Allow
+                Action:
+                  - cloudformation:DescribeStacks
+                  - cloudformation:DescribeStackEvents
+                  - cloudformation:DescribeStackResource
+                  - cloudformation:DescribeStackResources
+                  - ec2:DescribeInstances
+                  - ec2:AssociateIamInstanceProfile
+                  - ec2:ModifyInstanceAttribute
+                  - ec2:ReplaceIamInstanceProfileAssociation
+                  - iam:ListInstanceProfiles
+                  - iam:PassRole
+                Resource: "*"
+
+  ################## LAMBDA BOOTSTRAP FUNCTION ################
+
+  AppRunnerC9BootstrapInstanceLambda:
+    Description: Bootstrap Cloud9 instance
+    Type: Custom::AppRunnerC9BootstrapInstanceLambda
+    DependsOn:
+      - AppRunnerC9BootstrapInstanceLambdaFunction
+      - AppRunnerC9Instance
+      - AppRunnerC9InstanceProfile
+      - AppRunnerC9LambdaExecutionRole
+    Properties:
+      Tags:
+        - Key: Environment
+          Value: AWS App Runner
+      ServiceToken:
+        Fn::GetAtt:
+          - AppRunnerC9BootstrapInstanceLambdaFunction
+          - Arn
+      REGION:
+        Ref: AWS::Region
+      StackName:
+        Ref: AWS::StackName
+      EnvironmentId:
+        Ref: AppRunnerC9Instance
+      LabIdeInstanceProfileName:
+        Ref: AppRunnerC9InstanceProfile
+      LabIdeInstanceProfileArn:
+        Fn::GetAtt:
+          - AppRunnerC9InstanceProfile
+          - Arn
+
+  AppRunnerC9BootstrapInstanceLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Tags:
+        - Key: Environment
+          Value: AWS App Runner
+      Handler: index.lambda_handler
+      Role:
+        Fn::GetAtt:
+          - AppRunnerC9LambdaExecutionRole
+          - Arn
+      Environment:
+        Variables:
+          CLOUD9_ENVIRONMENT: !Ref AppRunnerC9Instance
+          CLOUD9_OWNER_ROLE: !Sub arn:aws:iam::${AWS::AccountId}:role/TeamRole
+      Runtime: python3.9
+      MemorySize: 256
+      Timeout: '600'
+      Code:
+        ZipFile: |
+          from __future__ import print_function
+          import boto3
+          import json
+          import os
+          import time
+          import traceback
+          import cfnresponse
+          import logging
+          
+          
+          def lambda_handler(event, context):
+              logging.info("event: {}".format(event))
+              # logging.info('context: {}'.format(context))
+              responseData = {}
+          
+              if event["RequestType"] == "Create":
+                  try:
+                      # Open AWS clients
+                      ec2 = boto3.client("ec2")
+          
+                      # Get the InstanceId of the Cloud9 IDE
+                      instance = ec2.describe_instances(
+                          Filters=[
+                              {
+                                  "Name": "tag:Name",
+                                  "Values": [
+                                      "aws-cloud9-"
+                                      + event["ResourceProperties"]["StackName"]
+                                      + "-"
+                                      + event["ResourceProperties"]["EnvironmentId"]
+                                  ],
+                              }
+                          ]
+                      )["Reservations"][0]["Instances"][0]
+                      # logging.info('instance: {}'.format(instance))
+          
+                      # Create the IamInstanceProfile request object
+                      iam_instance_profile = {
+                          "Arn": event["ResourceProperties"]["LabIdeInstanceProfileArn"],
+                          "Name": event["ResourceProperties"]["LabIdeInstanceProfileName"],
+                      }
+                      # logging.info('iam_instance_profile: {}'.format(iam_instance_profile))
+          
+                      # Wait for Instance to become ready before adding Role
+                      instance_state = instance["State"]["Name"]
+                      # logging.info('instance_state: {}'.format(instance_state))
+                      while instance_state != "running":
+                          time.sleep(5)
+                          instance_state = ec2.describe_instances(
+                              InstanceIds=[instance["InstanceId"]]
+                          )
+                          # logging.info('instance_state: {}'.format(instance_state))
+          
+                      # attach instance profile
+                      response = ec2.associate_iam_instance_profile(
+                          IamInstanceProfile=iam_instance_profile,
+                          InstanceId=instance["InstanceId"],
+                      )
+                      logging.info(
+                          "response - associate_iam_instance_profile: {}".format(response)
+                      )
+                      responseData = {
+                          "Success": "Started bootstrapping for instance: "
+                          + instance["InstanceId"]
+                      }
+                      cfnresponse.send(
+                          event,
+                          context,
+                          cfnresponse.SUCCESS,
+                          responseData,
+                          "CustomResourcePhysicalID",
+                      )
+          
+                  except Exception as e:
+                      logging.error(e, exc_info=True)
+                      responseData = {"Error": traceback.format_exc(e)}
+                      cfnresponse.send(
+                          event,
+                          context,
+                          cfnresponse.FAILED,
+                          responseData,
+                          "CustomResourcePhysicalID",
+                      )
+              elif event["RequestType"] == "Delete":
+                  return cfnresponse.send(
+                      event,
+                      context,
+                      cfnresponse.SUCCESS,
+                      responseData,
+                      "CustomResourcePhysicalID",
+                  )
+              elif event["RequestType"] == "Update":
+                  return cfnresponse.send(
+                      event,
+                      context,
+                      cfnresponse.SUCCESS,
+                      responseData,
+                      "CustomResourcePhysicalID",
+                  )
+
+
+  ################## SSM BOOTSRAP HANDLER ###############
+  AppRunnerC9OutputBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+  AppRunnerC9SSMDocument:
+    Type: AWS::SSM::Document
+    Properties:
+      Tags:
+        - Key: Environment
+          Value: AWS App Runner
+      DocumentFormat: YAML
+      DocumentType: Command
+      Content:
+        schemaVersion: '2.2'
+        description: Bootstrap Cloud9 Instance
+        mainSteps:
+          - action: aws:runShellScript
+            name: AppRunnerC9bootstrap
+            inputs:
+              runCommand:
+                - "#!/bin/bash"
+                - date
+                - aws --version
+                - pip install awscli --upgrade --user
+                - sudo yum install -y yum-utils
+                - sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
+                - sudo yum -y install terraform
+                - terraform version
+                - cd /tmp
+                - sudo wget -q https://dlcdn.apache.org/maven/maven-3/3.8.5/binaries/apache-maven-3.8.5-bin.tar.gz -O /tmp/apache-maven-3.8.5-bin.tar.gz
+                - sudo gzip -d /tmp/apache-maven-3.8.5-bin.tar.gz
+                - sudo tar -xf /tmp/apache-maven-*.tar -C /opt
+                - sudo ln -s /opt/apache-maven-3.8.5 /opt/maven
+                - echo "export M2_HOME=/opt/maven" >> /home/ec2-user/.bashrc
+                - echo "export MAVEN_HOME=/opt/maven" >> /home/ec2-user/.bashrc
+                - echo "export PATH=\${M2_HOME}/bin:\${PATH}" >> /home/ec2-user/.bashrc
+                - source /home/ec2-user/.bashrc
+                - mvn --version
+                - !Sub "sudo su - ec2-user -c \"cd /home/ec2-user/environment && git clone ${ProjectRepositoryUrl}\""
+                - sudo su - ec2-user -c "cd /home/ec2-user/environment/aws-apprunner-terraform/petclinic && mvn package -Dmaven.test.skip=true"
+                - echo "Bootstrap completed with return code $?"
+
+  AppRunnerC9BootstrapAssociation:
+    Type: AWS::SSM::Association
+    DependsOn: AppRunnerC9OutputBucket
+    Properties:
+      Name: !Ref AppRunnerC9SSMDocument
+      OutputLocation:
+        S3Location:
+          OutputS3BucketName: !Ref AppRunnerC9OutputBucket
+          OutputS3KeyPrefix: bootstrapoutput
+      Targets:
+        - Key: tag:SSMBootstrap
+          Values:
+            - Active
+
+  ################## INSTANCE #####################
+  AppRunnerC9InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: "/"
+      Roles:
+        - Ref: AppRunnerC9Role
+
+  AppRunnerC9Instance:
+    Description: "-"
+    DependsOn: AppRunnerC9BootstrapAssociation
+    Type: AWS::Cloud9::EnvironmentEC2
+    Properties:
+      Description: AWS Cloud9 instance for App Runner
+      AutomaticStopTimeMinutes: 3600
+      InstanceType:
+        Ref: AppRunnerC9InstanceType
+      ImageId: amazonlinux-2-x86_64
+      Name:
+        Ref: AWS::StackName
+      OwnerArn: !Sub arn:aws:sts::${AWS::AccountId}:assumed-role/TeamRole/MasterKey
+      Tags:
+        -
+          Key: SSMBootstrap
+          Value: Active
+        -
+          Key: Environment
+          Value: AWS App Runner
+
+
+
+
+
+
+
+Outputs:
+  Cloud9IDE:
+    Value:
+      Fn::Join:
+        - ''
+        - - https://
+          - Ref: AWS::Region
+          - ".console.aws.amazon.com/cloud9/ide/"
+          - Ref: AppRunnerC9Instance
+          - "?region="
+          - Ref: AWS::Region

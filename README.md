@@ -16,67 +16,42 @@ This workshop is designed to enable engineers to get some hands-on experience us
 
 The Spring PetClinic sample application is designed to show how the Spring application framework can be used to build simple, but powerful database-oriented applications. It uses AWS RDS (MySQL) at the backend and it will demonstrate the use of Spring's core functionality. The Spring Framework is a collection of small, well-focused, loosely coupled Java frameworks that can be used independently or collectively to build industrial strength applications of many different types. 
 
-## Contributor
-
-1. Irshad A Buchh, Amazon Web Services
 
 ## Architecture
-![Architecture](images/Architecture.png)
+![Architecture Diagram](docs/images/Architecture.png)
 
 ## Prerequisites
 
-Before you build the whole infrastructure, including your CI/CD pipeline, you will need to meet the following pre-requisites.
+Before you build the whole infrastructure, including your CI/CD pipeline, you will need to meet the following pre-requisites. 
 
-### AWS account
+* If you are running this workshop as part of an AWS event please follow the instructions [here](docs/AWS_Event.md), 
+* Otherwise, if you're using your personal AWS account to run this workshop on your own please follow instructions [here](docs/Your_Own_Account.md).
 
-Ensure you have access to an AWS account, and a set of credentials with *Administrator* permissions. **Note:** In a production environment we would recommend locking permissions down to the bare minimum needed to operate the pipeline.
 
-### Create an AWS Cloud9 environment
-
-Log into the AWS Management Console and search for Cloud9 services in the search bar. Click Cloud9 and create an AWS Cloud9 environment in the `us-east-1` region based on Amazon Linux 2. You can select the instance type as t2.micro.
-
-### Configure the AWS Cloud9 environment
+### Configure the AWS Cloud9 environment 
 
 Launch the AWS Cloud9 IDE. Close the `Welcome` tab and open a new `Terminal` tab.
 
-![Cloud9](images/Cloud9.png)
+![Cloud9](docs/images/Cloud9.png)
 
-#### Create and attach an IAM role for your Cloud9 instance
+#### Disable AWS managed temporary credentials
 
-By default, Cloud9 manages temporary IAM credentials for you.  Unfortunately these are incomaptible with Terraform. To get around this you need to disable Cloud9 temporary credentials, and create and attach an IAM role for your Cloud9 instance.
+By default, Cloud9 manages temporary IAM credentials for you.  Unfortunately these are incomaptible with Terraform. To get around this you need to disable Cloud9 temporary credentials.
 
-1. Follow [this deep link to create an IAM role with Administrator access.](https://console.aws.amazon.com/iam/home#/roles$new?step=review&commonUseCase=EC2%2BEC2&selectedUseCase=EC2&policies=arn:aws:iam::aws:policy%2FAdministratorAccess)
-1. Confirm that **AWS service** and **EC2** are selected, then click **Next** to view permissions.
-1. Confirm that **AdministratorAccess** is checked, then click **Next: Tags** to assign tags.
-1. Take the defaults, and click **Next: Review** to review.
-1. Enter **workshop-admin** for the Name, and click **Create role**.
-![createrole](images/createrole.png)
-1. Follow [this deep link to find your Cloud9 EC2 instance](https://console.aws.amazon.com/ec2/v2/home?#Instances:tag:Name=aws-cloud9-;sort=desc:launchTime)
-1. Select the instance, then choose **Actions / Security / Modify IAM Role**. Note: If you cannot find this menu option, then look under **Actions / Instance Settings / Modify IAM Role** instead.
-![c9instancerole](images/c9instancerole.png)
-1. Choose **workshop-admin** from the **IAM Role** drop down, and select **Save**
-![c9attachrole](images/c9attachrole.png)
-1. Return to your Cloud9 workspace and click the gear icon (in top right corner), or click to open a new tab and choose "Open Preferences"
 1. Select **AWS SETTINGS**
 1. Turn off **AWS managed temporary credentials**
 1. Close the Preferences tab
-![c9disableiam](images/c9disableiam.png)
+   ![c9disableiam](docs/images/c9disableiam.png)
 1. In the Cloud9 terminal pane, execute the command:
     ```bash
     rm -vf ${HOME}/.aws/credentials
     ```
 1. As a final check, use the [GetCallerIdentity](https://docs.aws.amazon.com/cli/latest/reference/sts/get-caller-identity.html) CLI command to validate that the Cloud9 IDE is using the correct IAM role.
     ```bash
-    aws sts get-caller-identity --query Arn | grep workshop-admin -q && echo "IAM role valid" || echo "IAM role NOT valid"
+    aws sts get-caller-identity --query Arn | grep AppRunnerC9Role -q && echo "IAM role valid" || echo "IAM role NOT valid"
     ```
 
-#### Upgrade awscli
-To ensure you are running the latest version of AWS CLI, run the following command:
-
-```bash
-aws --version
-pip install awscli --upgrade --user
-```
+#### Configure awscli
 
 Run `aws configure` to configure your region. Leave all the other fields blank. You should have something like:
 
@@ -87,66 +62,13 @@ AWS Secret Access Key [None]:
 Default region name [None]: us-east-1
 Default output format [None]: 
 ```
+#### Verify maven is installed
 
-#### Install Terraform
-
-Download and install Terraform:
-
-```bash
-sudo yum install -y yum-utils
-sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
-sudo yum -y install terraform
-```
-
-Verify that you can run Terraform:
-
-```bash
-terraform version
-```
-
-#### Install Apache Maven
-
-```bash
-cd /tmp
-sudo wget https://www-eu.apache.org/dist/maven/maven-3/3.8.1/binaries/apache-maven-3.8.1-bin.tar.gz
-sudo tar xf /tmp/apache-maven-*.tar.gz -C /opt
-sudo ln -s /opt/apache-maven-3.8.1 /opt/maven
-
-```
-#### Setup Apache Maven
-
-```bash
-sudo nano ~/.bashrc
-```
-Paste the following lines at the end of the file:
-
-```bash
-export M2_HOME=/opt/maven
-export MAVEN_HOME=/opt/maven
-export PATH=${M2_HOME}/bin:${PATH}
-```
 Verify the Apache Maven installation:
 
 ```bash
 source ~/.bashrc
 mvn --version
-```
-#### Clone workshop repository
-<!---
-You will need to import the workshop files into your Cloud9 environment:
-
-```bash
-wget https://github.com/aws-samples/aws-ecs-cicd-terraform/archive/master.zip
-unzip master.zip
-cd aws-ecs-cicd-terraform-master
-```
--->
-
-Clone the source code repository:
-
-```bash
-cd ~/environment
-git clone https://github.com/aws-samples/aws-apprunner-terraform.git
 ```
 
 ## Package the application using Apache Maven
@@ -155,7 +77,6 @@ git clone https://github.com/aws-samples/aws-apprunner-terraform.git
 cd ~/environment/aws-apprunner-terraform/petclinic
 mvn package -Dmaven.test.skip=true
 ```
-The first time you execute this (or any other) command, Maven will need to download the plugins and related dependencies it needs to fulfill the command. From a clean installation of Maven, this can take some time (note: in the output above, it took almost five minutes). If you execute the command again, Maven will now have what it needs, so it won’t need to download anything new and will be able to execute the command quicker.
 
 The compiled java classes were placed in spring-petclinic/target/classes, which is another standard convention employed by Maven. By using the standard conventions, the POM above is small and you haven’t had to tell Maven explicitly where any of your sources are or where the output should go. By following the standard Maven conventions, you can do a lot with little effort.
 
@@ -172,37 +93,16 @@ Run the following inside the Cloud9 terminal:
 ```bash
 docker run -it --rm -p 8080:80  --name petclinic petclinic
 ```
-![ApplicationLocal](images/docker-local-run.png)
+![ApplicationLocal](docs/images/docker-local-run.png)
 
 This will run the application using container port of 80 and will expose the application to host port of 8080. Click Preview from the top menu and then click “Preview Running Application.” It will open a browser displaying the Spring Petclinic application.
 
-## Push Petclinic docker image to Amazon ECR
-On your Cloud9 IDE open a new terminal and run the following inside the new terminal:
 
-```bash
-AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text)
-AWS_REGION=$(aws configure get region)
-
-export REPOSITORY_NAME=petclinic
-export IMAGE_NAME=petclinic
-
-aws ecr create-repository \
-    --repository-name $REPOSITORY_NAME \
-    --image-scanning-configuration scanOnPush=true \
-    --region $AWS_REGION
-	
-aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
-
-docker tag $IMAGE_NAME $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_NAME
-docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_NAME
-
-```
 
 ## Build the infrastructure and pipeline
 
-We shall use Terraform to build the above architecture including the AWS CodePipeline.
+We will use Terraform to build the above architecture including the AWS CodePipeline.
 
-**Note:** This workshop will create chargeable resources in your account. When finished, please make sure you clean up resources as instructed at the end.
 
 ### Set up SSM parameter for DB passwd
 
@@ -216,7 +116,7 @@ aws ssm put-parameter --name /database/password  --value mysqlpassword --type Se
 cd ~/environment/aws-apprunner-terraform/terraform
 ```
 
-Edit `terraform.tfvars`, leave the `aws_profile` as `"default"`, and ensure `aws_region` matches your environment, and update `codebuild_cache_bucket_name` to replace the placeholder `yyyymmdd` with today's date, and the identifier `identifier` with something unique to you to create globally unique S3 bucket name. S3 bucket names can include numbers, lowercase letters and hyphens.
+Edit `.auto.tfvars`, leave the `aws_profile` as `"default"`, and ensure `aws_region` matches your environment, and update `codebuild_cache_bucket_name` to replace the placeholder `accountId` with your accountId.
 
 ### Build
 
@@ -234,7 +134,7 @@ terraform apply
 
 Terraform will display an action plan. When asked whether you want to proceed with the actions, enter `yes`.
 
-Wait for Terraform to complete the build before proceeding. It will take few minutes to complete “terraform apply” 
+Wait for Terraform to complete the build before proceeding. It will take few minutes to complete “terraform apply”
 
 ### Explore the stack you have built
 
@@ -250,18 +150,18 @@ Once the build is complete, you can explore your environment using the AWS conso
 Note that your pipeline starts in a failed state. That is because there is no code to build in the CodeCommit repo! In the next step you will push the petclinic app into the repo to trigger the pipeline.
 
 ### Explore the App Runner service
-Open the App Runner service configuration file [terraform/services.tf](terraform/services.tf) file and explore the options specified in the file.
+Open the App Runner service configuration file [terraform/services.tf](aws-apprunner-terraform/terraform/services.tf) file and explore the options specified in the file.
 
 ```typescript
  image_repository {
       image_configuration {
         port = var.container_port
         runtime_environment_variables = {
-          "spring.datasource.username" : "${var.db_user}",
-          "spring.datasource.password" : "${data.aws_ssm_parameter.dbpassword.value}",
-          "spring.datasource.initialization-mode" : var.db_initialize_mode,
-          "spring.profiles.active" : var.db_profile,
-          "spring.datasource.url" : "jdbc:mysql://${aws_db_instance.db.address}/${var.db_name}"
+           "AWS_REGION" : "${var.aws_region}",
+           "MYSQL_USERNAME" : "${var.db_user}",
+           "DATASOURCE_INITIALIZATION_MODE" : var.db_initialize_mode,
+           "ACTIVE_PROFILE" : var.db_profile,
+           "DATASOURCE_URL" : "jdbc:mysql://${aws_db_instance.db.address}/${var.db_name}"
         }
       }
       image_identifier      = "${data.aws_ecr_repository.image_repo.repository_url}:latest"
@@ -357,7 +257,7 @@ echo $tf_apprunner_service_url
 
 Use this in your browser to access the application.
 
-![Petclinic](images/petclinic.png)
+![Petclinic](docs/images/petclinic.png)
 ## Push a change through the pipeline and re-test
 
 The pipeline can now be used to deploy any changes to the application.
@@ -384,6 +284,23 @@ git push origin master
 ```
 
 As before, you can use the console to observe the progression of the change through the pipeline. Once done, verify that the application is working with the modified welcome message.
+
+## Deploy Petclinic docker image by pushing directly to Amazon ECR
+On your Cloud9 IDE open a new terminal and run the following inside the new terminal:
+
+```bash
+AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text)
+AWS_REGION=$(aws configure get region)
+
+export REPOSITORY_NAME=petclinic
+export IMAGE_NAME=petclinic
+	
+aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+
+docker tag $IMAGE_NAME $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_NAME
+docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_NAME
+
+```
 
 ## Tearing down the stack
 

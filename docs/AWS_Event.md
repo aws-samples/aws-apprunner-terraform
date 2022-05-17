@@ -26,7 +26,7 @@ By default, Cloud9 manages temporary IAM credentials for you.  Unfortunately the
     ```
 1. As a final check, use the [GetCallerIdentity](https://docs.aws.amazon.com/cli/latest/reference/sts/get-caller-identity.html) CLI command to validate that the Cloud9 IDE is using the correct IAM role.
     ```bash
-    aws sts get-caller-identity --query Arn | grep workshop-admin -q && echo "IAM role valid" || echo "IAM role NOT valid"
+    aws sts get-caller-identity --query Arn | grep AppRunnerC9Role -q && echo "IAM role valid" || echo "IAM role NOT valid"
     ```
 
 #### Configure awscli
